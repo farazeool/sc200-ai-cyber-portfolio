@@ -1,96 +1,80 @@
-# IT Ticket 001 — DNS Failure Investigation
+# IT Ticket 001 — DNS Resolution Failure
 
-**Status:** draft — complete using the supplied `day02/dns_failure_case.txt` evidence only.
+## Ticket Metadata
 
-## Ticket metadata
+- **Ticket ID:** IT-001
+- **Date opened:** 2026-07-19
+- **Environment:** Synthetic training scenario
+- **Affected device:** FIN-MAC-01
+- **Operating system:** macOS
+- **Priority:** Medium
+- **Status:** Resolved
+- **Analyst:** Faraz Mustafa Seyed
 
-- Ticket ID: IT-001
-- Opened (UTC): TODO
-- Analyst: Faraz Mustafa Seyed
-- Priority/severity: TODO
-- Status: TODO
-- Source of report: TODO
+## User-Reported Symptom
 
-## Symptom
-
-Describe only what the user/system observed. Do not write the cause here.
-
-TODO
+The user reports that websites fail to open when entered by domain name, while direct connectivity to a known public IP still works.
 
 ## Scope
 
-- Affected users: TODO
-- Affected devices: TODO
-- Affected applications/services: TODO
-- Known unaffected scope: TODO
-- Start time/time window: TODO
+- One endpoint affected
+- No evidence yet that other users are affected
+- General IP reachability appears available
+- Name resolution is the suspected failure point
 
-## Entities
+## Evidence and Tests
 
-| Entity type | Value | Evidence source |
-|---|---|---|
-| Device | TODO | TODO |
-| User | TODO | TODO |
-| Local IP | TODO | TODO |
-| DNS resolver | TODO | TODO |
-| Domain | TODO | TODO |
-| Gateway | TODO | TODO |
+| # | Test | Result | What it proves | What it does not prove |
+|---:|---|---|---|---|
+| 1 | Check local IP configuration | Valid private IP present | The endpoint has an IPv4 configuration | The address is conflict-free or authorized |
+| 2 | Check default gateway | Gateway configured | A route for non-local traffic exists | The gateway is reachable |
+| 3 | Ping `1.1.1.1` | Success | Public IP reachability works | DNS is working |
+| 4 | Ping `example.com` | Failure in scenario | The domain could not be used successfully | The website itself is unavailable |
+| 5 | `nslookup example.com` | Timeout in scenario | The configured resolver did not return an answer | The domain is malicious |
+| 6 | Review DNS resolver | Resolver set to unreachable `203.0.113.53` | The endpoint is configured to use that resolver | The resolver caused the issue until validated |
+| 7 | Change resolver to approved `8.8.8.8` | Query succeeds | Resolution works with the approved resolver | Every DNS query will always succeed |
 
-## Tests and evidence
+## Symptom Versus Root-Cause Hypothesis
 
-| # | Test | Command/tool | Observed result | What it proves | What it does not prove |
-|---:|---|---|---|---|---|
-| 1 | Local addressing | TODO | TODO | TODO | TODO |
-| 2 | Gateway | TODO | TODO | TODO | TODO |
-| 3 | IP reachability | TODO | TODO | TODO | TODO |
-| 4 | Domain/name resolution | TODO | TODO | TODO | TODO |
-| 5 | DNS query | TODO | TODO | TODO | TODO |
-| 6 | Route | TODO | TODO | TODO | TODO |
-| 7 | Packet evidence | TODO | TODO | TODO | TODO |
+### Symptom
 
-## Root-cause hypothesis
+The endpoint cannot access services by domain name.
 
-State a hypothesis, not a confirmed cause, until evidence validates it.
+### Root-Cause Hypothesis
 
-TODO
+The endpoint is configured to use an unreachable DNS resolver, causing name-resolution failure while basic IP reachability remains available.
 
-## Benign/alternate explanations
+## Resolution
 
-- TODO
-- TODO
-
-## Resolution or recommended action
-
-- Action: TODO
-- Owner/approval: TODO
-- Business impact: TODO
+1. Replaced the unreachable synthetic resolver `203.0.113.53`.
+2. Restored the approved resolver `8.8.8.8`.
+3. Re-ran `nslookup example.com`.
+4. Re-tested access to `https://example.com`.
 
 ## Validation
 
-State the exact tests that prove restoration.
+Validation passed because:
 
-- [ ] Approved domain resolves successfully
-- [ ] Required service is reachable
-- [ ] Correct DNS resolver is in use
-- [ ] No new issue was introduced
+- `nslookup example.com` returned valid A records
+- `ping example.com` resolved the domain to an IP
+- HTTPS connectivity to `example.com` succeeded
+- Direct IP reachability remained available
 
-**Validation evidence:** TODO
+## Escalation Conditions
 
-## Escalation condition
+Escalate if:
 
-Escalate when: TODO
+- Multiple endpoints receive the same incorrect DNS resolver
+- DHCP is distributing an unauthorized resolver
+- DNS responses are incorrect or inconsistent
+- Suspicious long subdomains or high-volume TXT queries are observed
+- The issue returns after correction
 
-## Final verdict
+## Final Assessment
 
-- Classification: TODO
-- Confidence: TODO
-- Confirmed facts: TODO
-- Remaining unknowns: TODO
-- Next owner/action: TODO
-
-## Ticket self-score
-
-- [ ] Symptom is separate from root cause
-- [ ] Every claim has a source/timestamp where applicable
-- [ ] Validation proves restoration
-- [ ] No unsupported certainty
+- **Classification:** Name-resolution failure
+- **Root cause:** Unreachable DNS resolver in the synthetic scenario
+- **Impact:** Domain-based access unavailable on one endpoint
+- **Resolution status:** Restored
+- **Confidence:** High within the supplied scenario
+- **Limitation:** This ticket is synthetic training evidence and does not represent a real production incident
