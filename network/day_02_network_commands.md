@@ -1,94 +1,64 @@
 # Day 02 — IP, DNS, DHCP and Ports as Investigation Evidence
 
-**Verification status:** not yet run for Day 02  
-**Environment:** M1 MacBook Pro / macOS  
-**Rule:** paste raw command output. Keep facts, interpretation, and limitations separate.
+## Objective
 
-## Six-row evidence table
+Treat network configuration and traffic as investigation evidence rather than isolated networking facts.
 
-| Evidence field | Actual value | Source command | Investigation meaning |
-|---|---|---|---|
-| UTC timestamp | TODO | `date -u` | Correlates evidence across logs |
-| Interface name | TODO | `route get default \| grep interface` | Identifies the active network interface |
-| Local IP | TODO | `ipconfig getifaddr <interface>` | Identifies the endpoint on the local network |
-| Prefix/netmask | TODO | `ifconfig <interface>` | Defines the local subnet boundary |
-| Default gateway | TODO | `route -n get default` | Identifies the next hop for non-local traffic |
-| DNS resolver | TODO | `scutil --dns` | Identifies the resolver used for name resolution |
+## Network Evidence Summary
 
-## 1. UTC timestamp
+| Evidence field | Observed value |
+|---|---|
+| UTC timestamp | Sun Jul 19 17:27:20 UTC 2026 |
+| Active interface | `en0` |
+| Local IPv4 address | `172.20.10.4` |
+| Default gateway | `172.20.10.1` |
+| DNS resolver | `8.8.8.8` |
 
-```text
-TODO: paste output of date -u
-```
+## Raw Network Configuration Evidence
 
-**This proves:** TODO  
-**This does not prove:** TODO
-
-## 2. Interface and local addressing
-
-Commands:
-
-```bash
-route get default | grep interface
-ipconfig getifaddr en0
-ifconfig en0
-```
+### UTC timestamp
 
 ```text
-TODO: paste raw output
+Sun Jul 19 17:27:20 UTC 2026
 ```
 
-**This proves:** TODO  
-**This does not prove:** TODO
-
-## 3. Default gateway
-
-Command:
-
-```bash
-route -n get default
-```
+### Active interface
 
 ```text
-TODO: paste raw output
+interface: en0
 ```
 
-**This proves:** TODO  
-**This does not prove:** TODO
-
-## 4. DNS resolver
-
-Command:
-
-```bash
-scutil --dns
-```
+### Local IPv4 address
 
 ```text
-TODO: paste relevant raw output without inventing values
+172.20.10.4
 ```
 
-**This proves:** TODO  
-**This does not prove:** TODO
+The address belongs to the private IPv4 range `172.16.0.0/12`.
 
-## 5. DHCP evidence
-
-Command:
-
-```bash
-ipconfig getpacket en0
-```
+### Default route and gateway
 
 ```text
-TODO: paste raw output or document that no packet details were returned
+route to: default
+destination: default
+mask: default
+gateway: 172.20.10.1
+interface: en0
+flags: <UP,GATEWAY,DONE,STATIC,PRCLONING,GLOBAL>
+recvpipe  sendpipe  ssthresh  rtt,msec  rttvar  hopcount  mtu  expire
+0         0         0         0         0       0         1500 0
 ```
 
-Record when available: assigned address, subnet mask, router, DNS server, lease time.
+### DNS resolver
 
-**This proves:** TODO  
-**This does not prove:** TODO
+```text
+nameserver[0] : 8.8.8.8
+nameserver[0] : 8.8.8.8
+```
 
-## 6. Reachability test
+## Connectivity and DNS Tests
+
+### Ping public IP
 
 Command:
 
@@ -96,32 +66,96 @@ Command:
 ping -c 3 1.1.1.1
 ```
 
+Result:
+
 ```text
-TODO: paste raw output
+PING 1.1.1.1 (1.1.1.1): 56 data bytes
+64 bytes from 1.1.1.1: icmp_seq=0 ttl=55 time=35.589 ms
+64 bytes from 1.1.1.1: icmp_seq=1 ttl=55 time=32.527 ms
+64 bytes from 1.1.1.1: icmp_seq=2 ttl=55 time=51.732 ms
+
+--- 1.1.1.1 ping statistics ---
+3 packets transmitted, 3 packets received, 0.0% packet loss
+round-trip min/avg/max/stddev = 32.527/39.949/51.732/8.425 ms
 ```
 
-**This proves:** TODO  
-**This does not prove:** TODO
+**This proves:** IP reachability to `1.1.1.1` worked at test time.
 
-## 7. Name-resolution and domain test
+**This does not prove:** DNS, HTTPS, or all internet services were working.
 
-Commands:
+### Ping domain
+
+Command:
 
 ```bash
 ping -c 3 example.com
-nslookup example.com
+```
+
+Result:
+
+```text
+PING example.com (172.66.147.243): 56 data bytes
+64 bytes from 172.66.147.243: icmp_seq=0 ttl=55 time=125.604 ms
+64 bytes from 172.66.147.243: icmp_seq=1 ttl=55 time=70.525 ms
+64 bytes from 172.66.147.243: icmp_seq=2 ttl=55 time=52.971 ms
+
+--- example.com ping statistics ---
+3 packets transmitted, 3 packets received, 0.0% packet loss
+round-trip min/avg/max/stddev = 52.971/83.033/125.604/30.943 ms
+```
+
+**This proves:** `example.com` resolved to an IP and responded to ICMP at test time.
+
+**This does not prove:** The website or HTTPS service was healthy.
+
+### DNS A lookup
+
+Command:
+
+```bash
 nslookup -type=A example.com
+```
+
+Result:
+
+```text
+Server: 8.8.8.8
+Address: 8.8.8.8#53
+
+Non-authoritative answer:
+Name: example.com
+Address: 172.66.147.243
+Name: example.com
+Address: 104.20.23.154
+```
+
+**This proves:** The configured resolver returned IPv4 addresses for `example.com`.
+
+**This does not prove:** The domain is trustworthy or that a browser connected to it.
+
+### DNS MX lookup
+
+Command:
+
+```bash
 nslookup -type=MX example.com
 ```
 
+Result:
+
 ```text
-TODO: paste raw output
+Server: 8.8.8.8
+Address: 8.8.8.8#53
+
+Non-authoritative answer:
+example.com mail exchanger = 0 .
 ```
 
-**This proves:** TODO  
-**This does not prove:** TODO
+**This proves:** The resolver returned an MX response indicating a null mail exchanger.
 
-## 8. Route test
+**This does not prove:** Any email service is available for the domain.
+
+### Traceroute
 
 Command:
 
@@ -129,45 +163,40 @@ Command:
 traceroute -m 8 example.com
 ```
 
+Result:
+
 ```text
-TODO: paste raw output
+traceroute: Warning: example.com has multiple addresses; using 172.66.147.243
+traceroute to example.com (172.66.147.243), 8 hops max, 40 byte packets
+1  172.20.10.1 (172.20.10.1)  6.910 ms  4.125 ms  4.984 ms
+2  * *
 ```
 
-**This proves:** TODO  
-**This does not prove:** TODO
+The traceroute was manually stopped after hop 2.
+
+**This proves:** The first responding hop was the configured gateway `172.20.10.1`.
+
+**This does not prove:** Hop 2 or the destination was unavailable, because devices may ignore traceroute probes.
 
 ## Decision
 
-Choose one and justify it with the evidence above:
+**Classification: Neither reachability failure nor name-resolution failure.**
 
-- [ ] Reachability failure
-- [ ] Name-resolution failure
-- [ ] Both
-- [ ] Neither
+Evidence:
 
-**Decision and rationale:** TODO
+- Public-IP ping succeeded with 0% packet loss.
+- Domain ping succeeded with 0% packet loss.
+- DNS A lookup returned two IPv4 addresses.
+- The configured resolver `8.8.8.8` responded.
+- Traceroute reached the local gateway before later probes timed out or were stopped.
 
-## Wireshark packet evidence
+## Initial Analyst Interpretation
 
-Capture only traffic you own or are authorised to inspect. Start a capture, visit `https://example.com`, stop after about 30 seconds, and apply these filters separately:
+The endpoint had a private IPv4 address, a configured default gateway, and a configured DNS resolver. Both direct IP reachability and DNS resolution worked during testing. The available evidence therefore does not support either a general reachability failure or a DNS name-resolution failure.
 
-```text
-dns
-tcp.port == 443
-ip.addr == <your-IP>
-```
+## Remaining Day 2 Work
 
-| Frame | Timestamp | Source | Destination | Protocol | Relevant field/observation |
-|---:|---|---|---|---|---|
-| TODO | TODO | TODO | TODO | TODO | TODO |
-| TODO | TODO | TODO | TODO | TODO | TODO |
-| TODO | TODO | TODO | TODO | TODO | TODO |
-| TODO | TODO | TODO | TODO | TODO | TODO |
-| TODO | TODO | TODO | TODO | TODO | TODO |
-
-## Analyst conclusion
-
-- Observed facts: TODO
-- Assumptions/hypotheses: TODO
-- Missing evidence: TODO
-- Next investigation action: TODO
+- Capture and document at least five Wireshark packets using `dns`, `tcp.port == 443`, and `ip.addr == 172.20.10.4`.
+- Complete `network/it_ticket_001_dns_failure.md`.
+- Complete `network/common_ports_security_cheatsheet.csv`.
+- Create `ai-cyber-triage-agent/examples/suspicious_dns_port_activity.txt`.
