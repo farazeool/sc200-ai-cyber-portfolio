@@ -200,3 +200,60 @@ The endpoint had a private IPv4 address, a configured default gateway, and a con
 - Complete `network/it_ticket_001_dns_failure.md`.
 - Complete `network/common_ports_security_cheatsheet.csv`.
 - Create `ai-cyber-triage-agent/examples/suspicious_dns_port_activity.txt`.
+
+## Wireshark Packet Evidence
+
+Capture interface: `en0`
+
+Capture file: `day_02_basic_network_capture.pcapng`
+
+Display filters used:
+
+```text
+dns
+tcp.port == 443
+ip.addr == 172.20.10.4
+ip.addr == 104.20.23.154 || ip.addr == 172.66.147.243
+```
+
+| Frame | Time | Source | Destination | Protocol | Relevant field |
+|---:|---:|---|---|---|---|
+| 12 | 4.573633 | 172.20.10.4 | 8.8.8.8 | DNS | A query for `example.com`, UDP destination port 53 |
+| 13 | 4.739621 | 8.8.8.8 | 172.20.10.4 | DNS | A response returning `172.66.147.243` and `104.20.23.154` |
+| 19 | 6.372769 | 172.20.10.4 | 172.66.147.243 | TCP | SYN from source port 57014 to destination port 443 |
+| 21 | 6.501145 | 172.66.147.243 | 172.20.10.4 | TCP | SYN/ACK from source port 443 to destination port 57014 |
+| 23 | 6.501748 | 172.20.10.4 | 172.66.147.243 | TLS | Client Hello with `SNI=example.com` |
+
+### DNS Observation
+
+The endpoint `172.20.10.4` sent an A-record query for `example.com` to resolver `8.8.8.8`. The resolver returned two IPv4 addresses: `172.66.147.243` and `104.20.23.154`.
+
+**This proves:** The configured resolver received the query and returned IPv4 answers.
+
+**This does not prove:** That the domain is safe or that the user completed a web session.
+
+### TCP Observation
+
+Frames 19, 21 and 22 show the TCP three-way handshake:
+
+1. Client SYN
+2. Server SYN/ACK
+3. Client ACK
+
+**This proves:** A TCP connection to destination port 443 was established.
+
+**This does not prove:** That the application-layer content was legitimate or safe.
+
+### TLS Observation
+
+Frame 23 shows a TLS Client Hello with `SNI=example.com`.
+
+**This proves:** The client began a TLS session and exposed the requested server name in visible handshake metadata.
+
+**This does not prove:** The encrypted application payload contents, user intent or domain reputation.
+
+### Analyst Conclusion
+
+The DNS response and subsequent TCP/TLS packets correlate the domain `example.com` with destination IP `172.66.147.243` during this capture. The evidence supports successful name resolution and successful establishment of an encrypted HTTPS session.
+
+Port `443` indicates HTTPS/TLS use, but it does not automatically mean the traffic is safe. Malicious infrastructure can also use encrypted traffic.
