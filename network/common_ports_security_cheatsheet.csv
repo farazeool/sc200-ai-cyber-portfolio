@@ -1,10 +1,10 @@
 port,protocol,service,business_use,security_risk,suspicious_pattern,first_investigation_action
-22,TCP,SSH,TODO,TODO,TODO,TODO
-25,TCP,SMTP,TODO,TODO,TODO,TODO
-53,TCP/UDP,DNS,TODO,TODO,TODO,TODO
-80,TCP,HTTP,TODO,TODO,TODO,TODO
-443,TCP,HTTPS/TLS,TODO,TODO,TODO,TODO
-445,TCP,SMB,TODO,TODO,TODO,TODO
-3389,TCP/UDP,RDP,TODO,TODO,TODO,TODO
-5985,TCP,WinRM HTTP,TODO,TODO,TODO,TODO
-5986,TCP,WinRM HTTPS,TODO,TODO,TODO,TODO
+22,TCP,SSH,Remote administration of Linux and Unix systems,Credential attacks tunneling and unauthorized remote access,Repeated external login attempts or access from an unusual source IP,Check source IP destination host account login result and authorization
+25,TCP,SMTP,Mail transfer between email servers,Open relay abuse spam delivery phishing infrastructure and malware email activity,Workstation sending a high volume of outbound email directly,Confirm whether the source is an approved mail server and review message volume and recipients
+53,UDP/TCP,DNS,Domain-name resolution,DNS tunneling malicious domains resolver abuse and data exfiltration,Long subdomains high query volume or unusual TXT requests,Review requesting host queried domains query types resolver and frequency
+80,TCP,HTTP,Unencrypted web traffic and legacy application access,Credential exposure malicious downloads and unsafe redirects,Sensitive data or executable downloads over cleartext HTTP,Review URL host request method response status and transferred object
+443,TCP,HTTPS/TLS,Encrypted web and application traffic,Encrypted command-and-control phishing and data exfiltration,Regular beaconing unusual destinations or large outbound uploads,Review destination domain and IP process timing certificate and transfer volume
+445,TCP,SMB,Windows file and printer sharing,Lateral movement ransomware credential relay and unauthorized share access,One workstation connecting to many internal systems or shares,Review source host account accessed shares authentication results and destination count
+3389,TCP/UDP,RDP,Remote Windows desktop access,Brute force stolen credentials and unauthorized remote control,External or after-hours RDP from an unusual user or source IP,Review logon events source IP MFA device ownership and authorization
+5985,TCP,WinRM HTTP,Windows remote management and automation,Remote execution lateral movement and administrative abuse,WinRM traffic from an unapproved workstation or user,Identify initiating user process source host destination and change authorization
+5986,TCP,WinRM HTTPS,Encrypted Windows remote management,Abuse of a privileged administration channel,Privileged WinRM activity from an unexpected system or time,Verify authorization correlate logon and process events and review target systems
