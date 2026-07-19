@@ -1,7 +1,0 @@
-PING microsoft.com (150.171.109.163): 56 data bytes
-Request timeout for icmp_seq 0
-Request timeout for icmp_seq 1
-Request timeout for icmp_seq 2
-
---- microsoft.com ping statistics ---
-4 packets transmitted, 0 packets received, 100.0% packet loss

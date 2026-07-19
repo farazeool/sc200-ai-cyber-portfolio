@@ -1,0 +1,11 @@
+.DS_Store
+*.pcap
+*.pcapng
+*.evtx
+*.zip
+*.7z
+*.log
+.env
+.env.*
+secrets/
+private-evidence/
